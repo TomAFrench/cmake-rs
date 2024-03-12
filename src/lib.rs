@@ -65,6 +65,7 @@ pub struct Config {
     asmflags: OsString,
     defines: Vec<(OsString, OsString)>,
     deps: Vec<String>,
+    preset: Option<String>,
     target: Option<String>,
     host: Option<String>,
     out_dir: Option<PathBuf>,
@@ -191,6 +192,7 @@ impl Config {
             deps: Vec::new(),
             profile: None,
             out_dir: None,
+            preset: None,
             target: None,
             host: None,
             configure_args: Vec::new(),
@@ -359,6 +361,12 @@ impl Config {
     {
         self.env
             .push((key.as_ref().to_owned(), value.as_ref().to_owned()));
+        self
+    }
+
+    /// Sets the build preset.
+    pub fn build_preset(&mut self, preset: &str) -> &mut Config {
+        self.preset = Some(preset.to_string());
         self
     }
 
@@ -847,7 +855,11 @@ impl Config {
             }
         }
 
-        cmd.arg("--build").arg(".");
+        if let Some(preset) = &self.preset {
+            cmd.arg("--build").arg("--preset").arg(preset);
+        } else {
+            cmd.arg("--build").arg(".");
+        }
 
         if !self.no_build_target {
             let target = self
